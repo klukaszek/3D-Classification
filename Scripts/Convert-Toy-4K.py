@@ -23,13 +23,6 @@ for i in enumerate(pc):
     l.extend(normal[i])
     data.append(l)
 
-# Save data if needed
-with open('chicken.xyzn', 'w') as f:
-    for item in data:
-        for vertex in item:
-           f.write("%s, " % vertex)
-        f.write("\n" % item)
-
 # Convert list to numpy array
 data = np.array(data)
 
@@ -47,3 +40,13 @@ pcd.paint_uniform_color([0, 0, 0])
 
 # Visualize point cloud to make sure it looks correct
 o3d.visualization.draw_geometries([pcd])
+
+## Save data as xyzn for use
+# with open('chicken.xyzn', 'w') as f:
+#     for item in data:
+#         for vertex in item:
+#            f.write("%s, " % vertex)
+#         f.write("\n" % item)
+
+## Save point cloud as ply file (Or use xyzn if you want)
+# o3d.io.write_point_cloud("chicken.ply", pcd)
