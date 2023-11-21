@@ -22,6 +22,7 @@ class Voxelize():
         if system not in allowed_OS:
             raise ValueError('OS not supported. Please choose from: {}'.format(allowed_OS))
 
+        
         self.path = path
         self.dataset = dataset
         self.system = system
@@ -61,7 +62,10 @@ class Voxelize():
             for file in files:
                 
                 # Get path to .off file
-                path = self.path + '/ModelNet40/' + file
+                if (self.system == 'Windows'):
+                    path = self.path + file
+                else:
+                    path = self.path + '/ModelNet40/' + file
 
                 # Load .off file as a trimesh object
                 mesh = trimesh.load(path)
