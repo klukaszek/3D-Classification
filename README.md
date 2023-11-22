@@ -54,7 +54,7 @@ Models Papers:
 - Neural Network For 3D Object Classification:
     - http://cs231n.stanford.edu/reports/2016/pdfs/417_Report.pdf
 - TriMesh2 (C++) Fork:
-    https://github.com/Forceflow/trimesh2
+    - https://github.com/Forceflow/trimesh2
 - CudaVoxelizer:
     - https://github.com/Forceflow/cuda_voxelizer
 - TriMesh4 (Python):
