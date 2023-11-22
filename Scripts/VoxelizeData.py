@@ -4,7 +4,6 @@ import subprocess
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from trimesh.voxel.creation import voxelize_binvox
 from trimesh.exchange.binvox import load_binvox
 from torch.utils.data import TensorDataset, DataLoader
 from Scripts.ConvertToy4K import convert_toy4k_npz
@@ -85,6 +84,7 @@ class Voxelize():
             for file in files:
 
                 path = ''
+                binvox_path = ''
 
                 # Get path to .off file
                 if self.dataset == "ModelNet40":
@@ -92,22 +92,27 @@ class Voxelize():
                 # Convert .npz file to .ply file and get path to new .ply file
                 if self.dataset == "Toys4K":
                     path = convert_toy4k_npz(self.path + file)
+                
+                # ShapeNetCore provides Binvox files, so we can skip the voxelization step
+                if self.dataset == "ShapeNetCore.v2":
+                    binvox_path = path
+                # Otherwise, we need to voxelize the mesh
+                else:
+                    # Define arguments for cuda_voxelizer executable
+                    args = ['./cuda_voxelizer', '-f', path, '-s', '32', '-o', 'binvox']
 
-                # Define arguments for cuda_voxelizer executable
-                args = ['./cuda_voxelizer', '-f', path, '-s', '32', '-o', 'binvox']
+                    # Run the cuda_voxelizer executable to create a binvox file (This is orders of magnitude faster than using trimesh4.0)
+                    popen = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    popen.wait()
 
-                # Run the cuda_voxelizer executable to create a binvox file (This is orders of magnitude faster than using trimesh4.0)
-                popen = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                popen.wait()
+                    if popen.returncode != 0:
+                        raise subprocess.CalledProcessError(popen.returncode, popen.args)
+                        
+                    if popen.stderr:
+                        print(popen.stderr)
 
-                if popen.returncode != 0:
-                    raise subprocess.CalledProcessError(popen.returncode, popen.args)
-                    
-                if popen.stderr:
-                    print(popen.stderr)
-
-                # Get path to binvox file that was created from the .off file
-                binvox_path = path + '_32.binvox'
+                    # Get path to binvox file that was created from the .off file
+                    binvox_path = path + '_32.binvox'
 
                 # Open the binvox file
                 binvox = open(binvox_path, 'rb')
