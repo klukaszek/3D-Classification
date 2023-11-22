@@ -29,6 +29,7 @@ class Voxelize():
         if system not in allowed_OS:
             raise ValueError(f'OS not supported. Please choose from: {allowed_OS}')
 
+        
         self.path = path
         self.dataset = dataset
         self.system = system
@@ -68,7 +69,6 @@ class Voxelize():
 
             for label in labels:
                 files = split_files[split_files['class'] == label]
-                files = files['object_path'].tolist()
 
                 print(files)
 
