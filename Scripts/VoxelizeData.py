@@ -69,6 +69,7 @@ class Voxelize():
 
             for label in labels:
                 files = split_files[split_files['class'] == label]
+                files = files['object_path'].tolist()
 
                 print(files)
 
