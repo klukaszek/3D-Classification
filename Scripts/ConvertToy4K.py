@@ -2,6 +2,10 @@ from turtle import distance
 from open3d import io, utility, geometry
 import numpy as np
 
+"""
+Author: Kyle Lukaszek
+"""
+
 def convert_toy4k_npz(path):
     """
     Convert a .npz file containing a point cloud and normals to a .ply file

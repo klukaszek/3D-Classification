@@ -2,6 +2,8 @@ import os
 import pandas as pd
 
 """
+Author: Kyle Lukaszek
+
 We need to iterate through a directory with the following structure:
 
 -> toys4k_point_clouds
@@ -21,7 +23,7 @@ We want to split the dataset into 80% train and 20% test
 """
 
 # Define the path to the directory containing the point clouds
-path = '../Data/toys4k_point_clouds/'
+path = '3D-Classification/Data/toys4k_obj_files/'
 
 # Define the path to the directory where the metadata file will be saved
 save_path = path + 'metadata_toys4k.csv'
@@ -58,7 +60,7 @@ for i, class_ in enumerate(classes):
         else:
             split = 'test'
 
-        metadata.loc[len(metadata)] = {'object_id': j, 'class': class_, 'split': split, 'object_path': class_ + '/' + item + '/pc10K.npz'}
+        metadata.loc[len(metadata)] = {'object_id': j, 'class': class_, 'split': split, 'object_path': class_ + '/' + item + '/mesh.obj'}
 
 # Save the metadata dataframe as a .csv file
 metadata.to_csv(save_path, index=False)

@@ -2,6 +2,16 @@ import torch
 import torch.nn as nn
 
 class VoxNet(nn.Module):
+
+    """
+    VoxNet: A 3D Convolutional Neural Network for Real-Time Object Recognition
+    https://www.ri.cmu.edu/pub_files/2015/9/voxnet_maturana_scherer_iros15.pdf
+
+    PyTorch implementation of VoxNet architecture.
+
+    Author: Lukas Janik-Jones
+    """
+
     def __init__(self, num_classes):
         super().__init__()
 
