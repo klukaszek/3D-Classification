@@ -38,6 +38,7 @@ make
 - NVIDIA CUDA Toolkit 10.0 or higher
 - Trimesh2 (see above)
 - OpenMP
+- CMake
 
 ### Installation
 
