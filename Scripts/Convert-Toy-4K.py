@@ -1,5 +1,6 @@
 import open3d as o3d
 import numpy as np
+import trimesh
 
 # Example
 
@@ -49,4 +50,4 @@ o3d.visualization.draw_geometries([pcd])
 #         f.write("\n" % item)
 
 ## Save point cloud as ply file (Or use xyzn if you want)
-# o3d.io.write_point_cloud("chicken.ply", pcd)
+#o3d.io.write_point_cloud("chicken.ply", pcd)
