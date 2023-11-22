@@ -54,10 +54,19 @@ cmake --build . --parallel num_cores
 ```
 
 Windows:
+- Install CUDA: https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html
 ```bash
 $env:CUDAARCHS="your_cuda_compute_capability"
 cmake -A x64 -DTrimesh2_INCLUDE_DIR:PATH="path_to_trimesh2_include" -DTrimesh2_LINK_DIR:PATH="path_to_trimesh2_library_dir" ..
 cmake --build . --parallel num_cores
 ```
 
+OSX:
+NOTE: Modern OSX does not support CUDA, so this will not work. You can try to build the CPU version of the voxelizer, it is slower, but still faster than the original Python implementation.
+```bash
+
+cd build
+cmake -DTrimesh2_INCLUDE_DIR:PATH="path_to_trimesh2_include" -DTrimesh2_LINK_DIR:PATH="path_to_trimesh2_library_dir" ..
+cmake --build . --parallel num_cores
+```
 Note: CUDAARCHS should just be the compute capability, e.g. 75 for RTX 20 series cards, and 86 for RTX 30 series cards. For a full list, see https://developer.nvidia.com/cuda-gpus (omit the dot in the compute capability).
