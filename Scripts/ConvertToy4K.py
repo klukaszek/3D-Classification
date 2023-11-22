@@ -6,10 +6,14 @@ import numpy as np
 Author: Kyle Lukaszek
 """
 
-def convert_toy4k_npz(path):
+def convert_toy4k_npz(path, type='ply'):
     """
-    Convert a .npz file containing a point cloud and normals to a .ply file
+    Convert a .npz file containing a point cloud and normals to a file
     """
+    accepted_types = ['ply', 'stl']
+
+    if type not in accepted_types:
+        raise ValueError(f"Type must be one of {accepted_types}")
 
     # Load npz file containing point cloud and normals
     data = np.load(path, allow_pickle=True)
@@ -45,26 +49,32 @@ def convert_toy4k_npz(path):
 
     # Generate mesh from point cloud using Ball Pivoting Algorithm
 
-    # Estimate radius for rolling ball
-    distances = pcd.compute_nearest_neighbor_distance()
-    avg_dist = np.mean(distances)
-    radius = 1 * avg_dist
+    # # Estimate radius for rolling ball
+    # distances = pcd.compute_nearest_neighbor_distance()
+    # avg_dist = np.mean(distances)
+    # radius = 1 * avg_dist
 
-    # Run ball pivoting algorithm
-    bpa_mesh = geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, utility.DoubleVector([radius, radius * 2]))
+    # # Run ball pivoting algorithm
+    # bpa_mesh = geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(pcd, utility.DoubleVector([radius, radius * 2]))
 
-    # Create path to save .obj file [remove .npz and add .stl]
-    path = path.replace('.npz', '.stl')
+    # # Create path to save .stl file [remove .npz and add .stl]
+    # path = path.replace('.npz', '.stl')
 
-    # Rotate mesh to align
+    # # Rotate mesh to align
 
-    # Create rotation matrix
-    R = bpa_mesh.get_rotation_matrix_from_xyz((-np.pi/2, -np.pi/4, np.pi))
+    # # Create rotation matrix
+    # R = bpa_mesh.get_rotation_matrix_from_xyz((-np.pi/2, -np.pi/4, np.pi))
 
-    # Rotate mesh
-    bpa_mesh.rotate(R, center=(0, 0, 0))
+    # # Rotate mesh
+    # bpa_mesh.rotate(R, center=(0, 0, 0))
 
-    # Save mesh as .obj file
-    io.write_triangle_mesh(path, bpa_mesh, write_vertex_normals=True)
+    # # Save mesh as .stl file
+    # io.write_triangle_mesh(path, bpa_mesh, write_vertex_normals=True)
+
+    # Create path to save .ply file [remove .npz and add .ply]
+    path = path.replace('.npz', '.ply')
+
+    # Save point cloud as .ply file
+    io.write_point_cloud(path, pcd, write_ascii=True)
 
     return path

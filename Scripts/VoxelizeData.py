@@ -46,11 +46,12 @@ class Voxelize():
 
         # Voxelize the meshes in the dataset
         self.train = self.voxelize('train', render)
-        self.test = self.voxelize('test', render)
-
         if save:
-            save_voxels(save_path + self.dataset + 'Train.npz', self.train, self.train_labels, overwrite)
-            save_voxels(save_path + self.dataset + 'Test.npz', self.test, self.test_labels, overwrite)
+            save_voxels(self.train, self.train_labels, save_path=save_path + 'Train.npz', overwrite=overwrite)
+        
+        self.test = self.voxelize('test', render)
+        if save:
+            save_voxels(self.test, self.test_labels, save_path=save_path + 'Test.npz', overwrite=overwrite)
 
 
     def get_files(self):
@@ -64,6 +65,9 @@ class Voxelize():
         if self.dataset == "Toys4K":
             metadata = pd.read_csv(self.path + 'metadata_toys4k.csv')
             metadata.drop(columns=['object_id'], inplace=True)
+
+            # This mesh is corrupted and is also huge so we will drop it
+            metadata.drop(metadata[metadata['object_path'] == 'octopus/octopus_004/mesh.obj'].index, inplace=True)
             return metadata
 
     def voxelize(self, split, render=False):
@@ -95,6 +99,7 @@ class Voxelize():
 
             # Iterate through each .off file
             for file in files:
+
                 # Get path to .off file
                 if self.dataset == "ModelNet40":
                     path = self.path + 'ModelNet40/' + file
@@ -270,9 +275,6 @@ def render_voxel_grid(data):
     plt.clf()
 
 def save_voxels(data, labels=None, save_path='./Data/temp.npz', overwrite=False):
-    if save_path[-4:] != '.npz':
-        raise ValueError('Please save the voxel grids as a .npz file.')
-    
     i = 1
     
     # Create a new file name if the file already exists and overwrite is false
