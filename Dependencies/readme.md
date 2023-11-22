@@ -1,5 +1,9 @@
 # Dependencies Installation Guide
 
+## Binvox - Patrick Min (http://www.patrickmin.com/binvox/)
+
+Everything is already included in the Dependencies folder. Binvox is used to convert .obj files to .binvox files, which are used by the backup voxelizer in the event Cuda_Voxelizer fails.
+
 ## Trimesh 2 Fork - Jeroen Baert (https://github.com/Forceflow/trimesh2)
 
 ### Requirements
