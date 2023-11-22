@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from trimesh.voxel.creation import voxelize_binvox
 from trimesh.exchange.binvox import load_binvox
 from torch.utils.data import TensorDataset, DataLoader
+from Scripts.ConvertToy4K import convert_toy4k_npz
 
 def normalize_0_1(data):
     """
@@ -19,7 +20,7 @@ class Voxelize():
     Class for voxelizing .off files, ply files, etc. and storing them as numpy arrays
     """
     def __init__(self, path, dataset, system='Unix', render=False):
-        allowed_datasets = ['ModelNet40', 'ShapeNetCore.v2', 'toys4k_point_clouds']
+        allowed_datasets = ['ModelNet40', 'ShapeNetCore.v2', 'Toys4K']
 
         allowed_OS = ['Unix', 'Windows']
 
@@ -62,75 +63,87 @@ class Voxelize():
         if split not in allowed_splits:
             raise ValueError('Split not supported. Please choose from: {}'.format(allowed_splits))
         
-        if self.dataset == "ModelNet40":
-            # 
-            split_files = self.files[self.files['split'] == split]
+        # 
+        split_files = self.files[self.files['split'] == split]
 
-            voxelized_meshes = []
+        voxelized_meshes = []
             
-            labels = split_files['class'].unique().tolist()
+        labels = split_files['class'].unique().tolist()
 
-            n = 0
+        n = 0
 
-            for label in labels:
-                files = split_files[split_files['class'] == label]
-                files = files['object_path'].tolist()
+        # Iterate through each class label
+        for label in labels:
+            files = split_files[split_files['class'] == label]
+            files = files['object_path'].tolist()
 
-                i = 0
+            i = 0
 
-                print(f'Voxelizing {split} meshes of the {label} class...')
+            print(f'Voxelizing {split} meshes of the {label} class...')
 
-                # Iterate through each .off file
-                for file in files:
-                    
-                    # Get path to .off file
+            # Iterate through each .off file
+            for file in files:
+
+                path = ''
+
+                # Get path to .off file
+                if self.dataset == "ModelNet40":
                     path = self.path + 'ModelNet40/' + file
+                # Convert .npz file to .ply file and get path to new .ply file
+                if self.dataset == "Toys4K":
+                    path = convert_toy4k_npz(self.path + file)
 
-                    args = ['./cuda_voxelizer', '-f', path, '-s', '32', '-o', 'binvox']
+                # Define arguments for cuda_voxelizer executable
+                args = ['./cuda_voxelizer', '-f', path, '-s', '32', '-o', 'binvox']
+
+                # Run the cuda_voxelizer executable to create a binvox file (This is orders of magnitude faster than using trimesh4.0)
+                popen = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                popen.wait()
+
+                if popen.returncode != 0:
+                    raise subprocess.CalledProcessError(popen.returncode, popen.args)
                     
-                    # Run the cuda_voxelizer executable to create a binvox file (This is orders of magnitude faster than using trimesh4.0)
-                    popen = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    popen.wait()
+                if popen.stderr:
+                    print(popen.stderr)
 
-                    if popen.returncode != 0:
-                        raise subprocess.CalledProcessError(popen.returncode, popen.args)
-                    
-                    if popen.stderr:
-                        print(popen.stderr)
+                # Get path to binvox file that was created from the .off file
+                binvox_path = path + '_32.binvox'
 
-                    # Get path to binvox file that was created from the .off file
-                    binvox_path = path + '_32.binvox'
+                # Open the binvox file
+                binvox = open(binvox_path, 'rb')
 
-                    # Open the binvox file
-                    binvox = open(binvox_path, 'rb')
+                # Load the binvox file
+                voxel_grid = load_binvox(binvox)
 
-                    # Load the binvox file
-                    voxel_grid = load_binvox(binvox)
+                # Close the binvox file
+                binvox.close()
 
-                    # Close the binvox file
-                    binvox.close()
+                # Delete the binvox file
+                os.remove(binvox_path)
 
-                    # Delete the binvox file
-                    os.remove(binvox_path)
+                if self.dataset == "Toys4K":
+                    # Delete the .obj file that was created from the .npz file
+                    os.remove(path)
 
-                    # Extract the voxel grid as a numpy array
-                    voxel_grid = voxel_grid.matrix.astype(np.int8)
+                # Extract the voxel grid as a numpy array
+                voxel_grid = voxel_grid.matrix.astype(np.int8)
 
-                    # Normalize the voxel grid to be either 0 and 1
-                    voxel_grid = normalize_0_1(voxel_grid)
+                # Normalize the voxel grid to be either 0 and 1
+                voxel_grid = normalize_0_1(voxel_grid)
 
-                    # Add voxel grid to list of voxel grids
-                    voxelized_meshes.append(voxel_grid)
+                # Add voxel grid to list of voxel grids
+                voxelized_meshes.append(voxel_grid)
 
-                    if render:
-                        self.render(voxel_grid)
+                # Render the voxel grid as a 3D plot
+                if render:
+                    self.render(voxel_grid)
 
-                    i+=1
+                i+=1
 
-                n += 1
-                print(f'Finished voxelizing {i} {split} meshes in the {label} class. ({n}/{len(labels)})')
+            n += 1
+            print(f'Finished voxelizing {i} {split} meshes in the {label} class. ({n}/{len(labels)})')
 
-            return voxelized_meshes
+        return voxelized_meshes
         
     def build_dataloader(self, split):
         """
@@ -170,6 +183,7 @@ class Voxelize():
         """
         Render a voxel grid as a 3D plot
         """
+
         # make plot
         fig = plt.figure()
         
