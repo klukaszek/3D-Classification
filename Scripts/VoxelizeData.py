@@ -18,7 +18,7 @@ class Voxelize():
     """
     Class for voxelizing .off files, ply files, etc. and storing them as numpy arrays
     """
-    def __init__(self, path, dataset, system='Unix'):
+    def __init__(self, path, dataset, system='Unix', render=False):
         allowed_datasets = ['ModelNet40', 'ShapeNetCore.v2', 'toys4k_point_clouds']
 
         allowed_OS = ['Unix', 'Windows']
@@ -29,14 +29,15 @@ class Voxelize():
         if system not in allowed_OS:
             raise ValueError(f'OS not supported. Please choose from: {allowed_OS}')
 
-        
+        print(f'Voxelizing {dataset} dataset...')
+
         self.path = path
         self.dataset = dataset
         self.system = system
         self.files = self.get_files()
         self.train_labels = self.files[self.files['split'] == 'train']['class'].tolist()
         self.test_labels = self.files[self.files['split'] == 'test']['class'].tolist()
-        self.train = self.voxelize('train')
+        self.train = self.voxelize('train', render)
 
 
     def get_files(self):
@@ -47,8 +48,12 @@ class Voxelize():
             metadata = pd.read_csv(self.path + 'metadata_modelnet40.csv')
             metadata.drop(columns=['object_id'], inplace=True)
             return metadata
+        if self.dataset == "Toys4K":
+            metadata = pd.read_csv(self.path + 'metadata_toys4k.csv')
+            metadata.drop(columns=['object_id'], inplace=True)
+            return metadata
 
-    def voxelize(self, split):
+    def voxelize(self, split, render=False):
         """
         Voxelize the meshes in the dataset and return a list of voxel grids
         """
@@ -70,8 +75,6 @@ class Voxelize():
             for label in labels:
                 files = split_files[split_files['class'] == label]
                 files = files['object_path'].tolist()
-
-                print(files)
 
                 i = 0
 
@@ -118,6 +121,9 @@ class Voxelize():
 
                     # Add voxel grid to list of voxel grids
                     voxelized_meshes.append(voxel_grid)
+
+                    if render:
+                        self.render(voxel_grid)
 
                     i+=1
 
@@ -195,5 +201,3 @@ class Voxelize():
         plt.show()
 
         plt.clf()
-
-
