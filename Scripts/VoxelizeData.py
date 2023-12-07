@@ -21,7 +21,7 @@ class Voxelize():
     Class for voxelizing .off files, ply files, etc. and storing them as numpy arrays
     """
     def __init__(self, path, dataset, system='Unix', render=False, save=False, save_path=None, overwrite=False):
-        allowed_datasets = ['ModelNet40', 'ShapeNetCore.v2', 'Toys4K']
+        allowed_datasets = ['ModelNet40', 'ShapeNet', 'Toys4K']
 
         allowed_OS = ['Unix', 'Windows']
 
@@ -37,24 +37,42 @@ class Voxelize():
         self.dataset = dataset
         self.system = system
 
-        # Get a dataframe containing the paths to the .off files and their corresponding labels
-        self.files = self.get_files()
+        # We need to handle ShapeNet differently because the train/test splits are provided differently
+        if dataset == "ShapeNet":
+            self.files = self.get_files(split='train')
+            self.train_labels = self.files[self.files['split'] == 'train']['class'].tolist()
 
-        # Get the labels for the train and test sets
-        self.train_labels = self.files[self.files['split'] == 'train']['class'].tolist()
-        self.test_labels = self.files[self.files['split'] == 'test']['class'].tolist()
+            self.train = self.voxelize('train', render)
 
-        # Voxelize the meshes in the dataset
-        self.train = self.voxelize('train', render)
-        if save:
-            save_voxels(self.train, self.train_labels, save_path=save_path + 'Train.npz', overwrite=overwrite)
-        
-        self.test = self.voxelize('test', render)
-        if save:
-            save_voxels(self.test, self.test_labels, save_path=save_path + 'Test.npz', overwrite=overwrite)
+            if save:
+                save_voxels(self.train, self.train_labels, save_path=save_path + 'Train.npz', overwrite=overwrite)
 
+            self.files = self.get_files(split='test')
+            self.test_labels = self.files[self.files['split'] == 'test']['class'].tolist()
 
-    def get_files(self):
+            self.test = self.voxelize('test', render)
+
+            if save:
+                save_voxels(self.test, self.test_labels, save_path=save_path + 'Test.npz', overwrite=overwrite)
+
+        else:
+            # Get a dataframe containing the paths to the .off files and their corresponding labels
+            self.files = self.get_files()
+
+            # Get the labels for the train and test sets
+            self.train_labels = self.files[self.files['split'] == 'train']['class'].tolist()
+            self.test_labels = self.files[self.files['split'] == 'test']['class'].tolist()
+
+            # Voxelize the meshes in the dataset
+            self.train = self.voxelize('train', render)
+            if save:
+                save_voxels(self.train, self.train_labels, save_path=save_path + 'Train.npz', overwrite=overwrite)
+            
+            self.test = self.voxelize('test', render)
+            if save:
+                save_voxels(self.test, self.test_labels, save_path=save_path + 'Test.npz', overwrite=overwrite)
+
+    def get_files(self, split=None):
         """
         Returns a dataframe containing the paths to the .off files and their corresponding labels
         """
@@ -68,6 +86,10 @@ class Voxelize():
 
             # This mesh is corrupted and is also huge so we will drop it
             metadata.drop(metadata[metadata['object_path'] == 'octopus/octopus_004/mesh.obj'].index, inplace=True)
+            return metadata
+        if self.dataset == "ShapeNet":
+            metadata = pd.read_csv(self.path + 'metadata_shapenet_' + split + '.csv')
+            metadata.drop(columns=['object_id'], inplace=True)
             return metadata
 
     def voxelize(self, split, render=False):
@@ -109,9 +131,9 @@ class Voxelize():
                 else:
                     path = self.path + file
                 
-                # ShapeNetCore provides Binvox files, so we can skip the voxelization step
-                if self.dataset == "ShapeNetCore.v2":
-                    binvox_path = path
+                # ShapeNet is XYZN format and needs to be converted to OFF format
+                if self.dataset == "ShapeNet":    
+                    binvox_path = path + '.binvox'
                 # Otherwise, we need to voxelize the mesh
                 else:
                     # Define arguments for cuda_voxelizer executable
@@ -138,11 +160,16 @@ class Voxelize():
                 # Load the binvox file
                 voxel_grid = load_binvox(binvox)
 
+                # Scale the ShapeNet voxel grid to be 32x32x32
+                if self.dataset == "ShapeNet":
+                    voxel_grid = voxel_grid.resize((32, 32, 32))
+
                 # Close the binvox file
                 binvox.close()
 
-                # Delete the binvox file
-                os.remove(binvox_path)
+                if self.dataset != "ShapeNet":
+                    # Delete the binvox file
+                    os.remove(binvox_path)
 
                 # Extract the voxel grid as a numpy array
                 voxel_grid = voxel_grid.matrix.astype(np.int8)
