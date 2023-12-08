@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from trimesh.voxel.creation import voxelize_binvox
 from trimesh.exchange.binvox import load_binvox
 from torch.utils.data import TensorDataset, DataLoader
+from ipywidgets import IntProgress
+from IPython.display import display
 
 """
 Author: Kyle Lukaszek
@@ -37,42 +39,23 @@ class Voxelize():
         self.dataset = dataset
         self.system = system
 
-        # We need to handle ShapeNet differently because the train/test splits are provided differently
-        if dataset == "ShapeNet":
-            self.files = self.get_files(split='train')
-            self.train_labels = self.files[self.files['split'] == 'train']['class'].tolist()
+        # Get a dataframe containing the paths to the .off files and their corresponding labels
+        self.files = self.get_files()
 
-            self.train = self.voxelize('train', render)
+        # Get the labels for the train and test sets
+        self.train_labels = self.files[self.files['split'] == 'train']['class'].tolist()
+        self.test_labels = self.files[self.files['split'] == 'test']['class'].tolist()
 
-            if save:
-                save_voxels(self.train, self.train_labels, save_path=save_path + 'Train.npz', overwrite=overwrite)
-
-            self.files = self.get_files(split='test')
-            self.test_labels = self.files[self.files['split'] == 'test']['class'].tolist()
-
-            self.test = self.voxelize('test', render)
-
-            if save:
-                save_voxels(self.test, self.test_labels, save_path=save_path + 'Test.npz', overwrite=overwrite)
-
-        else:
-            # Get a dataframe containing the paths to the .off files and their corresponding labels
-            self.files = self.get_files()
-
-            # Get the labels for the train and test sets
-            self.train_labels = self.files[self.files['split'] == 'train']['class'].tolist()
-            self.test_labels = self.files[self.files['split'] == 'test']['class'].tolist()
-
-            # Voxelize the meshes in the dataset
-            self.train = self.voxelize('train', render)
-            if save:
-                save_voxels(self.train, self.train_labels, save_path=save_path + 'Train.npz', overwrite=overwrite)
+        # Voxelize the meshes in the dataset
+        self.train = self.voxelize('train', render)
+        if save:
+            save_voxels(self.train, self.train_labels, save_path=save_path + 'Train.npz', overwrite=overwrite)
             
-            self.test = self.voxelize('test', render)
-            if save:
-                save_voxels(self.test, self.test_labels, save_path=save_path + 'Test.npz', overwrite=overwrite)
+        self.test = self.voxelize('test', render)
+        if save:
+            save_voxels(self.test, self.test_labels, save_path=save_path + 'Test.npz', overwrite=overwrite)
 
-    def get_files(self, split=None):
+    def get_files(self):
         """
         Returns a dataframe containing the paths to the .off files and their corresponding labels
         """
@@ -88,7 +71,7 @@ class Voxelize():
             metadata.drop(metadata[metadata['object_path'] == 'octopus/octopus_004/mesh.obj'].index, inplace=True)
             return metadata
         if self.dataset == "ShapeNet":
-            metadata = pd.read_csv(self.path + 'metadata_shapenet_' + split + '.csv')
+            metadata = pd.read_csv(self.path + 'metadata_shapenet.csv')
             metadata.drop(columns=['object_id'], inplace=True)
             return metadata
 
@@ -96,16 +79,9 @@ class Voxelize():
         """
         Voxelize the meshes in the dataset and return a list of voxel grids
         """
-        allowed_splits = ['train', 'test']
-
-        if split not in allowed_splits:
-            raise ValueError('Split not supported. Please choose from: {}'.format(allowed_splits))
-        
-        # 
-        split_files = self.files[self.files['split'] == split]
-
         voxelized_meshes = []
-            
+        
+        split_files = self.files[self.files['split'] == split]
         labels = split_files['class'].unique().tolist()
 
         n = 0
@@ -115,9 +91,13 @@ class Voxelize():
             files = split_files[split_files['class'] == label]
             files = files['object_path'].tolist()
 
-            i = 0
+            print(f'Voxelizing {len(files)} {split} meshes in the {label} class...')
 
-            print(f'Voxelizing {split} meshes of the {label} class...')
+            # Create a progress bar
+            f = IntProgress(min=0, max=len(files))
+            display(f)
+
+            i = 0
 
             # Iterate through each .off file
             for file in files:
@@ -125,34 +105,28 @@ class Voxelize():
                 # Get path to .off file
                 if self.dataset == "ModelNet40":
                     path = self.path + 'ModelNet40/' + file
-                ## Convert .npz file to .ply file and get path to new .ply file
-                # elif self.dataset == "Toys4K":
-                #     path = convert_toy4k_npz(self.path + file)
+                elif self.dataset == "ShapeNet":
+                    path = self.path + 'shape_data/' + file
                 else:
                     path = self.path + file
                 
-                # ShapeNet is XYZN format and needs to be converted to OFF format
-                if self.dataset == "ShapeNet":    
-                    binvox_path = path + '.binvox'
-                # Otherwise, we need to voxelize the mesh
-                else:
-                    # Define arguments for cuda_voxelizer executable
-                    args = ['./cuda_voxelizer', '-f', path, '-s', '32', '-o', 'binvox']
+                # Define arguments for cuda_voxelizer executable
+                args = ['./cuda_voxelizer', '-f', path, '-s', '32', '-o', 'binvox']
 
-                    # Run the cuda_voxelizer executable to create a binvox file (This is orders of magnitude faster than using trimesh4.0)
-                    popen = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                    popen.wait()
+                # Run the cuda_voxelizer executable to create a binvox file (This is orders of magnitude faster than using trimesh4.0)
+                popen = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                popen.wait()
 
-                    # In case cuda_voxelizer fails, fall back to trimesh4.0
-                    if popen.returncode != 0:
-                        print(f"Cuda_voxelizer failed for {path}. Falling back to trimesh4.0.")
-                        voxel_grid = voxelize_backup(path, self.system)
-                        voxelized_meshes.append(voxel_grid)
-                        i+=1
-                        continue
+                # In case cuda_voxelizer fails, fall back to trimesh4.0
+                if popen.returncode != 0:
+                    print(f"Cuda_voxelizer failed for {path}. Falling back to trimesh4.0.")
+                    voxel_grid = voxelize_backup(path, self.system)
+                    voxelized_meshes.append(voxel_grid)
+                    i+=1
+                    continue
 
-                    # Get path to binvox file that was created from the .off file
-                    binvox_path = path + '_32.binvox'
+                # Get path to binvox file that was created from the .off/obj file
+                binvox_path = path + '_32.binvox'
 
                 # Open the binvox file
                 binvox = open(binvox_path, 'rb')
@@ -160,16 +134,11 @@ class Voxelize():
                 # Load the binvox file
                 voxel_grid = load_binvox(binvox)
 
-                # Scale the ShapeNet voxel grid to be 32x32x32
-                if self.dataset == "ShapeNet":
-                    voxel_grid = voxel_grid.resize((32, 32, 32))
-
                 # Close the binvox file
                 binvox.close()
 
-                if self.dataset != "ShapeNet":
-                    # Delete the binvox file
-                    os.remove(binvox_path)
+                # Delete the temporary binvox file
+                os.remove('./' + binvox_path)
 
                 # Extract the voxel grid as a numpy array
                 voxel_grid = voxel_grid.matrix.astype(np.int8)
@@ -178,14 +147,13 @@ class Voxelize():
                 voxel_grid = normalize_0_1(voxel_grid)
 
                 # Since the model is facing the ground, we need to rotate the voxel grid 180 degrees around the x-axis
-                if self.dataset == "Toys4K":
+                if self.dataset == "Toys4K" or self.dataset == "ShapeNet":
                     voxel_grid = np.rot90(voxel_grid, k=4, axes=(0, 1))
                     voxel_grid = np.rot90(voxel_grid, k=1, axes=(1, 2))
                     # Right now the model is oriented properly, but the model is facing the wrong direction
                     # We need to flip the model along the y-axis
                     voxel_grid = np.flip(voxel_grid, axis=1)
                     
-
                 # Add voxel grid to list of voxel grids
                 voxelized_meshes.append(voxel_grid)
 
@@ -193,7 +161,11 @@ class Voxelize():
                 if render:
                     render_voxel_grid(voxel_grid)
 
-                i+=1
+                i += 1
+
+                # Update the progress bar
+                f.value = i
+                f.description = f'{i}/{len(files)}'
 
             n += 1
             print(f'Finished voxelizing {i} {split} meshes in the {label} class. ({n}/{len(labels)})')
