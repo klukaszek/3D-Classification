@@ -17,26 +17,27 @@ class VoxNet(nn.Module):
 
         self.num_classes = num_classes
 
-        self.conv_1 = nn.Conv3d(32, 32, kernel_size=5, stride=2)
+        self.conv_1 = nn.Conv3d(1, 32, kernel_size=5, stride=2)
         self.conv_2 = nn.Conv3d(32, 32, kernel_size=3, stride=1)
         self.pool = nn.MaxPool3d(2)
         # I believe the input size should be number of out_channels of last conv3d layer
         # multiplied by the size of the data after pooling: (6,6,6)
-        self.full = nn.Linear((6*6*6), 128)
+        self.full = nn.Linear(32*(6*6*6), 128)
         self.out = nn.Linear(128, self.num_classes)
 
         self.relu = nn.ReLU()
-        self.drop = nn.Dropout(p=0.2)
+        self.drop_1 = nn.Dropout(p=0.2)
+        self.drop_2 = nn.Dropout(p=0.4)
 
     def forward(self, x):
         x = self.conv_1(x)
         x = self.relu(x)
-        x = self.drop(x)
+        x = self.drop_1(x)
         x = self.conv_2(x)
         x = self.relu(x)
         
         x = self.pool(x)
-        x = self.drop(x)
+        x = self.drop_2(x)
 
         # Flatten input
         x = x.view(x.size(0), -1)
@@ -45,9 +46,8 @@ class VoxNet(nn.Module):
 
         x = self.full(x)
         
-        # x = self.full(x)
         x = self.relu(x)
-        x = self.drop(x)
+        x = self.drop_2(x)
         x = self.out(x)
 
         return x
