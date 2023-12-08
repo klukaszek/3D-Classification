@@ -17,7 +17,7 @@ fc6 (1024) (32, 1024)
 softmax7 (32, 18)
 """
 
-class GCNN(nn.Module):
+class CNN(nn.Module):
 
     """
     3D model classification using convolutional neural network
@@ -36,10 +36,11 @@ class GCNN(nn.Module):
         self.conv_1 = nn.Conv3d(1, 32, kernel_size=1, stride=1)
         self.conv_2 = nn.Conv3d(32, 64, kernel_size=1, stride=1)
         self.conv_3 = nn.Conv3d(64, 128, kernel_size=1, stride=1)
-        self.conv_4 = nn.Conv3d(128, 128, kernel_size=1, stride=1)
+        self.conv_4 = nn.Conv3d(128, 256, kernel_size=1, stride=1)
         self.pool = nn.MaxPool3d(2)
 
-        self.full = nn.Linear(1024, 1024)
+        self.full_1 = nn.Linear(2048, 1024)
+        self.full_2 = nn.Linear(1024, 1024)
         self.soft = nn.Softmax(1)
         self.out = nn.Linear(1024, self.num_classes)
 
@@ -76,12 +77,12 @@ class GCNN(nn.Module):
         x = x.view(x.size(0), -1)
 
         # First fully connected layer
-        x = self.full(x)
+        x = self.full_1(x)
         x = self.relu(x)
         x = self.drop_1(x)
     
         # Second fully connected layer
-        x = self.full(x)
+        x = self.full_2(x)
         x = self.relu(x)
         x = self.drop_1(x)
         
