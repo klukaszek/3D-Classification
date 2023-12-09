@@ -6,24 +6,24 @@ Author: Kyle Lukaszek
 
 We need to iterate through a directory with the following structure:
 
--> toys4k_point_clouds
+-> toys4k
     -> [class name]
         -> [class name]_[number]
-            -> pc10K.npz
+            -> mesh.obj
 
 We need to create a metadata .csv file with the following structure:
 
 object_id, class, split, object_path
-0, airplane, train, toys4k_point_clouds/airplane/airplane_0/pc10K.npz
-1, airplane, train, toys4k_point_clouds/airplane/airplane_1/pc10K.npz
-2, airplane, train, toys4k_point_clouds/airplane/airplane_2/pc10K.npz
+0, airplane, train, toys4k/airplane/airplane_0/mesh.obj
+1, airplane, train, toys4k/airplane/airplane_1/mesh.obj
+2, airplane, train, toys4k/airplane/airplane_2/mesh.obj
 ...
 
 We want to split the dataset into 80% train and 20% test
 """
 
 # Define the path to the directory containing the point clouds
-path = '3D-Classification/Data/toys4k_obj_files/'
+path = '3D-Classification/Data/toys4k/'
 
 # Define the path to the directory where the metadata file will be saved
 save_path = path + 'metadata_toys4k.csv'

@@ -1,3 +1,5 @@
+from cProfile import label
+from enum import unique
 import os
 import torch
 import subprocess
@@ -14,13 +16,13 @@ from IPython.display import display
 """
 Author: Kyle Lukaszek
 
-File for voxelizing .off files, ply files, etc. and storing them as numpy arrays
-Includes a function for rendering a voxel grid as a 3D plot, and saving voxel grids as .npz files
+Script for voxelizing .off files, obj files, etc. and storing them as numpy arrays
+Includes a function for rendering a voxel grid as a 3D plot, Creating DataLoaders, and saving voxel grids as .npz files
 """
 
 class Voxelize():
     """
-    Class for voxelizing .off files, ply files, etc. and storing them as numpy arrays
+    Class for voxelizing .off files, .obj files, etc. and storing them as numpy arrays
     """
     def __init__(self, path, dataset, system='Unix', render=False, save=False, save_path=None, overwrite=False):
         allowed_datasets = ['ModelNet40', 'ShapeNet', 'Toys4K']
@@ -202,39 +204,28 @@ def voxelize_backup(path, system):
 
     return voxel_grid
 
-def build_dataloader(self, split):
+def build_dataloader(data, labels, batch_size=32, shuffle=True):
     """
     Build a dataloader for the voxelized meshes
     """
-    allowed_splits = ['train', 'test']
-
-    if split not in allowed_splits:
-        raise ValueError('Split not supported. Please choose from: {}'.format(allowed_splits))
-
     # Check if GPU is available
     gpu_memory = False
     if torch.cuda.is_available():
         gpu_memory = True
-        
-    if split == 'train':
-        data = self.train
-        labels = self.train_labels
 
-        train_dataset = TensorDataset(data, labels)
+    data = np.expand_dims(data, axis=1)
+     
+    # Convert labels to integer values so we can convert data and labels to tensors
+    label_as_int = []
+    unique_labels = np.unique(labels).tolist()
+    for i in labels:
+        label_as_int.append(int(unique_labels.index(i)))
 
-        # VoxNet paper uses batch size of 32
-        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=gpu_memory)
-        return train_loader
-
-    elif split == 'test':
-        data = self.test
-        labels = self.test_labels
-
-        test_dataset = TensorDataset(data, labels)
-
-        # VoxNet paper uses batch size of 32
-        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=gpu_memory)
-        return test_loader
+    # Create a TensorDataset and DataLoader
+    data = torch.utils.data.TensorDataset(torch.FloatTensor(data), torch.LongTensor(label_as_int))
+    dataloader = DataLoader(data, batch_size=batch_size, shuffle=shuffle, num_workers=4, pin_memory=gpu_memory)
+    
+    return dataloader
 
 def render_voxel_grid(data):
     """
