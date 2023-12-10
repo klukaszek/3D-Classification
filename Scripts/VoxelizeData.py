@@ -182,7 +182,7 @@ def normalize_0_1(data):
 
 def voxelize_backup(path, system):
     """
-    Fallback function for voxelize() in case cuda_voxelizer executable fails
+    Fallback function for voxelize() in case cuda_voxelizer binary fails
     """
     binvox_path = ''
     if system == 'Unix':
@@ -233,7 +233,7 @@ def load_dataset(dataset):
     Load a voxelized dataset from a .npz file.
     Returns train_data, train_labels, test_data, test_labels
     """
-    allowed_datasets = ["ModelNet40", "ShapeNet", "Toys"]
+    allowed_datasets = ["ModelNet40", "ShapeNet", "Toys4k"]
 
     if dataset not in allowed_datasets:
         raise ValueError("Dataset must be one of " + str(allowed_datasets))
@@ -243,7 +243,7 @@ def load_dataset(dataset):
         path += "ModelNet40/ModelNet40"
     elif dataset == "ShapeNet":
         path += "ShapeNet/ShapeNet"
-    elif dataset == "Toys":
+    elif dataset == "Toys4k":
         path += "toys4k/toys4k"
 
     # load training data
