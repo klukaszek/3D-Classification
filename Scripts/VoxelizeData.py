@@ -207,6 +207,7 @@ def voxelize_backup(path, system):
 def build_dataloader(data, labels, batch_size=32, shuffle=True):
     """
     Build a dataloader for the voxelized meshes
+    Returns a DataLoader
     """
     # Check if GPU is available
     gpu_memory = False
@@ -226,6 +227,38 @@ def build_dataloader(data, labels, batch_size=32, shuffle=True):
     dataloader = DataLoader(data, batch_size=batch_size, shuffle=shuffle, num_workers=4, pin_memory=gpu_memory)
     
     return dataloader
+
+def load_dataset(dataset):
+    """
+    Load a voxelized dataset from a .npz file.
+    Returns train_data, train_labels, test_data, test_labels
+    """
+    allowed_datasets = ["ModelNet40", "ShapeNet", "Toys"]
+
+    if dataset not in allowed_datasets:
+        raise ValueError("Dataset must be one of " + str(allowed_datasets))
+
+    path = "./Data/"
+    if dataset == "ModelNet40":
+        path += "ModelNet40/ModelNet40"
+    elif dataset == "ShapeNet":
+        path += "ShapeNet/ShapeNet"
+    elif dataset == "Toys":
+        path += "toys4k/toys4k"
+
+    # load training data
+    data = np.load(path + 'Train.npz', allow_pickle=True)
+
+    train_data = data['data']
+    train_labels = data['labels']
+
+    # load test data
+    data = np.load(path + 'Test.npz', allow_pickle=True)
+
+    test_data = data['data']
+    test_labels = data['labels']
+
+    return train_data, train_labels, test_data, test_labels
 
 def render_voxel_grid(data):
     """
