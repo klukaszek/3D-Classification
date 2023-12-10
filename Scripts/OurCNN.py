@@ -17,7 +17,7 @@ class CNN(nn.Module):
 
     """
     Our own convolutional neural net
-    
+
     Author: Lukas Janik-Jones
     """
 
@@ -44,7 +44,8 @@ class CNN(nn.Module):
         # pool (2)   -> 32 (16,16,16)
         # conv(5, 2) -> 64 (6,6,6)
         # pool (2)   -> 64 (3,3,3)
-        # full       -> 1728 to 192
+        # full       -> 1728 to 576
+        # full       -> 576 to 192
         # full       -> 192 to num_classes
 
         # First conv/pool layers
