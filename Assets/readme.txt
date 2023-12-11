@@ -1,1 +1,0 @@
-We will store any images / gifs in this directory.
