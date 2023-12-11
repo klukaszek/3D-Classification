@@ -23,79 +23,54 @@ class CNN(nn.Module):
     3D model classification using convolutional neural network
     https://cs229.stanford.edu/proj2015/146_report.pdf
 
-    PyTorch implementation of VoxNet architecture.
+    PyTorch implementation of 3DCNN architecture by JunYoung Gwak.
 
-    Author: Lukas Janik-Jones
+    Authors: Kyle Lukaszek and Lukas Janik-Jones
     """
 
     def __init__(self, num_classes):
-        super().__init__()
+        super(CNN, self).__init__()
 
-        self.num_classes = num_classes
-
-        self.conv_1 = nn.Conv3d(1, 32, 3, 3, 3)
-        self.conv_2 = nn.Conv3d(32, 64, 3, 3, 3)
-        self.conv_3 = nn.Conv3d(64, 128, 3, 3, 3)
-        self.conv_4 = nn.Conv3d(128, 256, 3, 3, 3)
-        self.pool = nn.MaxPool3d(2)
-
-        nn.init.xavier_uniform_(self.conv_1.weight)
-        nn.init.xavier_uniform_(self.conv_2.weight)
-        nn.init.xavier_uniform_(self.conv_3.weight)
-        nn.init.xavier_uniform_(self.conv_4.weight)
-
-        self.full_1 = nn.Linear(2048, 1024)
-        self.full_2 = nn.Linear(1024, 1024)
-        self.soft = nn.Softmax(1)
-        self.out = nn.Linear(1024, self.num_classes)
-
-        nn.init.xavier_uniform_(self.full_1.weight)
-        nn.init.xavier_uniform_(self.full_2.weight)
-
-        self.relu = nn.ReLU()
-        self.drop_1 = nn.Dropout(p=0.2)
-        self.drop_2 = nn.Dropout(p=0.4)
-
-    def forward(self, x):
         # First conv/pool layers
-        x = self.conv_1(x)
-        x = self.relu(x)
-        x = self.drop_1(x)
-        x = self.pool(x)
+        self.conv1 = nn.Conv3d(1, 32, kernel_size=3, padding=1)
+        self.relu1 = nn.ReLU()
+        self.pool1 = nn.MaxPool3d(kernel_size=2, stride=2)
 
         # Second conv/pool layers
-        x = self.conv_2(x)
-        x = self.relu(x)
-        x = self.drop_1(x)
-        x = self.pool(x)
+        self.conv2 = nn.Conv3d(32, 64, kernel_size=3, padding=1)
+        self.relu2 = nn.ReLU()
+        self.pool2 = nn.MaxPool3d(kernel_size=2, stride=2)
 
         # Third conv/pool layers
-        x = self.conv_3(x)
-        x = self.relu(x)
-        x = self.drop_1(x)
-        x = self.pool(x)
+        self.conv3 = nn.Conv3d(64, 128, kernel_size=3, padding=1)
+        self.relu3 = nn.ReLU()
+        self.pool3 = nn.MaxPool3d(kernel_size=2, stride=2)
 
         # Fourth conv/pool layers
-        x = self.conv_4(x)
-        x = self.relu(x)
-        x = self.drop_1(x)
-        x = self.pool(x)
-
-        # Flatten input
-        x = x.view(x.size(0), -1)
-
-        # First fully connected layer
-        x = self.full_1(x)
-        x = self.relu(x)
-        x = self.drop_1(x)
-    
-        # Second fully connected layer
-        x = self.full_2(x)
-        x = self.relu(x)
-        x = self.drop_1(x)
+        self.conv4 = nn.Conv3d(128, 256, kernel_size=3, padding=1)
+        self.relu4 = nn.ReLU()
+        self.pool4 = nn.MaxPool3d(kernel_size=2, stride=2)
         
-        x = self.soft(x)
-        
-        x = self.out(x)
+        # Fully connected layer 1
+        self.fc5 = nn.Linear(256 * 2 * 2 * 2, 1024)
+        self.relu5 = nn.ReLU()
+        self.dropout5 = nn.Dropout(0.5)
 
+        # Fully connected layer 2
+        self.fc6 = nn.Linear(1024, 1024)
+        self.relu6 = nn.ReLU()
+        self.dropout6 = nn.Dropout(0.5)
+
+        # Output layer
+        self.softmax7 = nn.Linear(1024, num_classes)
+
+    def forward(self, x):
+        x = self.pool1(self.relu1(self.conv1(x)))
+        x = self.pool2(self.relu2(self.conv2(x)))
+        x = self.pool3(self.relu3(self.conv3(x)))
+        x = self.pool4(self.relu4(self.conv4(x)))
+        x = x.view(-1, 256 * 2 * 2 * 2)  # Flatten the tensor
+        x = self.dropout5(self.relu5(self.fc5(x)))
+        x = self.dropout6(self.relu6(self.fc6(x)))
+        x = self.softmax7(x)
         return x
