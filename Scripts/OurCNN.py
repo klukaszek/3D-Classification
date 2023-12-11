@@ -33,7 +33,6 @@ class CNN(nn.Module):
         self.full_1 = nn.Linear(1728, 576)
         self.full_2 = nn.Linear(576, 192)
 
-
         self.out = nn.Linear(192, self.num_classes)
 
         self.relu = nn.ReLU()
