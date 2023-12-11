@@ -1,0 +1,60 @@
+This is BibTeX, Version 0.99d (TeX Live 2022)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: report.aux
+The style file: IEEEtran.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: bibliography.bib
+Warning--entry type for "trimesh" isn't style-file defined
+--line 91 of file bibliography.bib
+-- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+Warning--empty journal in paszke2017automatic
+
+Done.
+You've used 14 entries,
+            4087 wiz_defined-function locations,
+            901 strings with 10801 characters,
+and the built_in function-call counts, 10544 in all, are:
+= -- 750
+> -- 423
+< -- 55
++ -- 218
+- -- 93
+* -- 531
+:= -- 1561
+add.period$ -- 28
+call.type$ -- 14
+change.case$ -- 14
+chr.to.int$ -- 120
+cite$ -- 15
+duplicate$ -- 763
+empty$ -- 810
+format.name$ -- 104
+if$ -- 2410
+int.to.chr$ -- 0
+int.to.str$ -- 14
+missing$ -- 175
+newline$ -- 73
+num.names$ -- 14
+pop$ -- 453
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 2
+skip$ -- 771
+stack$ -- 0
+substring$ -- 294
+swap$ -- 598
+text.length$ -- 15
+text.prefix$ -- 0
+top$ -- 5
+type$ -- 14
+warning$ -- 1
+while$ -- 32
+width$ -- 16
+write$ -- 157
+(There were 2 warnings)
