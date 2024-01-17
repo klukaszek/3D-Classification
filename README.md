@@ -8,7 +8,7 @@
 https://github.com/klukaszek/3D-Classification
 
 ## Final Report:
-The final report for this project is provided as a PDF file in the root directory. It is titled 'CIS4780 Final Report.pdf'. The report contains a detailed description of the project, the results, and the conclusions we drew from the results.
+The final report for this project is provided as a PDF file in the root directory. It is titled [CIS4780 Final Report.pdf](https://github.com/klukaszek/3D-Classification/blob/main/CIS4780%20Final%20Report.pdf) The report contains a detailed description of the project, the results, and the conclusions we drew from the results.
 
 ## Datasets:
 The datasets we used for this project are expected to be in the subdirectories of the `data` directory. You will need the compressed versions of the datasets to use the models. Please contact us if you would like access to compressed npz files since we cannot upload it to GitHub.
